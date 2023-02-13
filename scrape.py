@@ -45,7 +45,8 @@ def save_lesson_as_html(dir, chapter_title, lesson_title, html):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python ./scrape.py dir https://www.roppers.org")
+        print("Usage: python ./scrape.py <course_url> <save_dir>")
+        print("For example: python ./scrape.py  https://roppers.org ComputingFundamentals")
         print("Provide login creds via env vars THINKFIC_USER and THINKFIC_PASS")
     else:
         try:
@@ -56,8 +57,8 @@ if __name__ == "__main__":
             print("[!] Please provide values for the env vars THINKFIC_USER and THINKFIC_PASS and try again.")
             exit(1)
 
-        save_dir = sys.argv[1]
-        course_url = sys.argv[2]
+        course_url = sys.argv[1]
+        save_dir = sys.argv[2]
 
         # Intialize Selenium browser driver
         opts = ChromeOptions()
