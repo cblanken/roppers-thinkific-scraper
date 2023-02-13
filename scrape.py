@@ -1,9 +1,12 @@
 import sys
+import time
 import os
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver import Chrome, ChromeOptions
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
 def save_assignment(root_dir, title, html):
@@ -34,11 +37,6 @@ if __name__ == "__main__":
         driver = webdriver.Chrome(options=opts)
         driver.implicitly_wait(1)
         driver.get(course_url)
-
-
-        # Check that target is a Roppers course
-        assert "Roppers Academy" in driver.title
-
 
         # Navigate to sign in page
         sign_in_btn = driver.find_element(By.LINK_TEXT, "SIGN IN")
@@ -85,7 +83,10 @@ if __name__ == "__main__":
             # Expand chapter
             expand_toggle = div.find_element(By.CSS_SELECTOR, 'span:nth-last-child(1)')
             expand_toggle.click()
-        
+
+            # TODO: remove time.sleep and use Explicit Waits
+            time.sleep(0.05)
+
             lesson_lis = div.find_elements(By.TAG_NAME, "li")
             for li in lesson_lis:
                 href = li.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
