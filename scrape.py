@@ -10,6 +10,30 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
+
+class content_finished_loading(object):
+    def __init__(self, element):
+        self.element = element
+
+    def __call__(self, driver):
+        if self.element.text.strip() == "Loading...":
+            return False
+        else:
+            return self.element
+
+class element_is_expanded(object):
+    def __init__(self, root_element, locator, is_expanded="true"):
+        self.root_element = root_element
+        self.locator = locator
+        self.is_expanded = is_expanded 
+
+    def __call__(self, driver):
+        element = self.root_element.find_element(*self.locator)
+        if self.is_expanded == element.get_attribute("aria-expanded"):
+            return element
+        else:
+            return False
+
 def save_file(path: Path, filename: str, data):
     with Path(path, filename).open("w") as fp:
         fp.write(data)
@@ -42,6 +66,8 @@ if __name__ == "__main__":
         driver.implicitly_wait(1)
         driver.get(course_url)
 
+        # Default driver wait
+        wait = WebDriverWait(driver, 5)
 
         # Navigate to sign in page
         sign_in_btn = driver.find_element(By.LINK_TEXT, "SIGN IN")
@@ -59,10 +85,8 @@ if __name__ == "__main__":
         submit_btn.click()
         input("Press ENTER when courses page has loaded.")
 
-
         # Select Thinkfic course from dashboard
         course_anchors = driver.find_elements(By.CSS_SELECTOR, 'ul[class="products__list"] div[class="card__header"] > a')
-        print(course_anchors)
 
         print("The following courses were found:")
         for i,anchor in enumerate(course_anchors):
@@ -83,29 +107,34 @@ if __name__ == "__main__":
 
         for div in chapter_divs:
             chapter_title = div.find_element(By.TAG_NAME, "h2").text
-            # print(f"- {chapter_title}")
+            print(f"[!] {chapter_title}")
 
-            # Expand chapter
+            # Expand chapter if needed
             expand_toggle = div.find_element(By.CSS_SELECTOR, 'span:nth-last-child(1)')
-            expand_toggle.click()
 
-            # TODO: replace time.sleep with Explicit Wait
-            time.sleep(1)
-
+            expanded_div_locator = (By.CSS_SELECTOR, "div:nth-of-type(1)")
+            if not element_is_expanded(div, expanded_div_locator, "true")(driver):
+                expand_toggle.click()
+                wait.until(element_is_expanded(div, expanded_div_locator, "true"))
+            
+            # Save each lesson HTML to file
             lesson_lis = div.find_elements(By.TAG_NAME, "li")
             for li in lesson_lis:
                 href = li.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
                 title = li.find_element(By.CSS_SELECTOR, "a > *:nth-last-child(1)").text.split('\n')[0].strip()
-                #print(f"  - {title} => {href}")
+                print(f"  - {title} => {href}")
 
+                wait.until(EC.element_to_be_clickable(li))
                 li.click() # open lesson content
-                ## TODO: replace time.sleep with Explicit Wait
-                time.sleep(0.25)
-
-                html = driver.find_element(By.ID, "content-inner").get_attribute("innerHTML")
+                
+                # Wait until lesson content is loaded
+                #wait.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, "main h3"), title))
+                main_content = driver.find_element(By.ID, "content-inner")
+                wait.until(content_finished_loading(main_content))
+                
+                html = main_content.get_attribute("innerHTML")
                 save_lesson_as_html(save_dir, chapter_title, title, html)
 
-            print(f"[!] Saved chapter: {chapter_title}")
 
         # TODO: throttle download
         driver.close
