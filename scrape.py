@@ -1,6 +1,7 @@
 import sys
 import time
 import os
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -9,11 +10,14 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
-def save_assignment(root_dir, title, html):
-    pass
+def save_file(path: Path, filename: str, data):
+    with Path(path, filename).open("w") as fp:
+        fp.write(data)
 
-def save_chapter(root_dir, title, assignments):
-    pass
+def save_lesson_as_html(dir, chapter_title, lesson_title, html):
+    path = Path(f'./{dir}/{chapter_title}/')
+    path.mkdir(parents=True, exist_ok=True)
+    save_file(path, f"{lesson_title}.html", html)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -37,6 +41,7 @@ if __name__ == "__main__":
         driver = webdriver.Chrome(options=opts)
         driver.implicitly_wait(1)
         driver.get(course_url)
+
 
         # Navigate to sign in page
         sign_in_btn = driver.find_element(By.LINK_TEXT, "SIGN IN")
@@ -77,30 +82,30 @@ if __name__ == "__main__":
         chapter_divs = driver.find_elements(By.CSS_SELECTOR, 'div[class="course-player__chapters-menu "] > div')
 
         for div in chapter_divs:
-            chapter_title = div.find_element(By.TAG_NAME, "h2")
-            print(f"- {chapter_title.text}")
+            chapter_title = div.find_element(By.TAG_NAME, "h2").text
+            # print(f"- {chapter_title}")
 
             # Expand chapter
             expand_toggle = div.find_element(By.CSS_SELECTOR, 'span:nth-last-child(1)')
             expand_toggle.click()
 
-            # TODO: remove time.sleep and use Explicit Waits
-            time.sleep(0.05)
+            # TODO: replace time.sleep with Explicit Wait
+            time.sleep(1)
 
             lesson_lis = div.find_elements(By.TAG_NAME, "li")
             for li in lesson_lis:
                 href = li.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
-                text = li.find_element(By.CSS_SELECTOR, "a > *:nth-last-child(1)").text.split('\n')[0].strip()
-                print(f"  - {text} => {href}")
+                title = li.find_element(By.CSS_SELECTOR, "a > *:nth-last-child(1)").text.split('\n')[0].strip()
+                #print(f"  - {title} => {href}")
 
-            print()
+                li.click() # open lesson content
+                ## TODO: replace time.sleep with Explicit Wait
+                time.sleep(0.25)
 
-        input()
+                html = driver.find_element(By.ID, "content-inner").get_attribute("innerHTML")
+                save_lesson_as_html(save_dir, chapter_title, title, html)
+
+            print(f"[!] Saved chapter: {chapter_title}")
 
         # TODO: throttle download
-        
-        #course = Course(sys.argv[1], sys.argv[2])
-        #with open(f"{sys.argv[1]}.html", "w") as fp:
-        #    fp.write(str(course.soup))
-        #assert "No results found." not in driver.page_source
         driver.close
