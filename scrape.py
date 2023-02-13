@@ -46,7 +46,7 @@ def save_lesson_as_html(dir, chapter_title, lesson_title, html):
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python ./scrape.py <course_url> <save_dir>")
-        print("For example: python ./scrape.py  https://roppers.org ComputingFundamentals")
+        print("For example: python ./scrape.py  https://www.roppers.org ComputingFundamentals")
         print("Provide login creds via env vars THINKFIC_USER and THINKFIC_PASS")
     else:
         try:
@@ -84,7 +84,7 @@ if __name__ == "__main__":
         submit_btn = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
         print("Waiting for login process...")
         submit_btn.click()
-        input("Press ENTER when courses page has loaded.")
+        wait.until(EC.title_contains("Dashboard"))
 
         # Select Thinkfic course from dashboard
         course_anchors = driver.find_elements(By.CSS_SELECTOR, 'ul[class="products__list"] div[class="card__header"] > a')
@@ -95,13 +95,12 @@ if __name__ == "__main__":
             text = anchor.get_attribute("text")
             print(f"- {i}: {text.strip()} => {href}")
 
-
         index = input("Select a course number: ")
 
+        # Load course page
         print("Navigating to course...")
         driver.get(course_anchors[int(index)].get_attribute("href"))
-        input("Press ENTER when the course page has loaded.")
-        
+        wait.until(EC.presence_of_element_located((By.ID, "player-wrapper")))
 
         # Navigate lessons by chapter and save source files
         chapter_divs = driver.find_elements(By.CSS_SELECTOR, 'div[class="course-player__chapters-menu "] > div')
@@ -122,6 +121,8 @@ if __name__ == "__main__":
             lesson_lis = div.find_elements(By.TAG_NAME, "li")
             for li in lesson_lis:
                 href = li.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
+
+                # TODO: fix bug causing empty lesson title
                 title = li.find_element(By.CSS_SELECTOR, "a > *:nth-last-child(1)").text.split('\n')[0].strip()
                 print(f"  - {title} => {href}")
 
