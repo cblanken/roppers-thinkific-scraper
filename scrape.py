@@ -82,7 +82,7 @@ if __name__ == "__main__":
         pass_input.send_keys(THINKFIC_PASS)
 
         submit_btn = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
-        print("Waiting for login process...")
+        print("Waiting for login process...", flush=True)
         submit_btn.click()
         wait.until(EC.title_contains("Dashboard"))
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         index = input("Select a course number: ")
 
         # Load course page
-        print("Navigating to course...")
+        print("Navigating to course...", flush=True)
         driver.get(course_anchors[int(index)].get_attribute("href"))
         wait.until(EC.presence_of_element_located((By.ID, "player-wrapper")))
 
@@ -119,24 +119,25 @@ if __name__ == "__main__":
             
             # Save each lesson HTML to file
             lesson_lis = div.find_elements(By.TAG_NAME, "li")
-            for li in lesson_lis:
-                href = li.find_element(By.CSS_SELECTOR, "a").get_attribute("href")
 
-                # TODO: fix bug causing empty lesson title
-                title = li.find_element(By.CSS_SELECTOR, "a > *:nth-last-child(1)").text.split('\n')[0].strip()
+            # TODO: replace time.sleep with appropriate Wait
+            time.sleep(0.1) # delay to ensure lesson li tags are loaded
+
+            for li in lesson_lis:
+                anchor = li.find_element(By.CSS_SELECTOR, "a")
+                href = anchor.get_attribute("href")
+
+                title = anchor.find_element(By.CSS_SELECTOR, "div:nth-last-child(1)").text.split('\n')[0].strip()
                 print(f"  - {title} => {href}")
 
                 wait.until(EC.element_to_be_clickable(li))
                 li.click() # open lesson content
                 
                 # Wait until lesson content is loaded
-                #wait.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, "main h3"), title))
                 main_content = driver.find_element(By.ID, "content-inner")
                 wait.until(content_finished_loading(main_content))
                 
                 html = main_content.get_attribute("innerHTML")
                 save_lesson_as_html(save_dir, chapter_title, title, html)
 
-
-        # TODO: throttle download
         driver.close
