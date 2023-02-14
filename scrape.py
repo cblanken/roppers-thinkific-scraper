@@ -68,7 +68,7 @@ if __name__ == "__main__":
         driver.get(course_url)
 
         # Default driver wait
-        wait = WebDriverWait(driver, 5)
+        wait = WebDriverWait(driver, 10)
 
         # Navigate to sign in page
         sign_in_btn = driver.find_element(By.LINK_TEXT, "SIGN IN")
@@ -138,6 +138,6 @@ if __name__ == "__main__":
                 wait.until(content_finished_loading(main_content))
                 
                 html = main_content.get_attribute("innerHTML")
-                save_lesson_as_html(save_dir, chapter_title, title, html)
+                save_lesson_as_html(save_dir, chapter_title, title, '\n'.join([x.strip() for x in html.split('\n')]))
 
         driver.close

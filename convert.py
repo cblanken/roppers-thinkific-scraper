@@ -24,6 +24,14 @@ if __name__ == "__main__":
                         html = pandoc.read(file=chapter_contents)
                     
                     with out_file_path.open("w") as out_file:
-                        markdown_content = pandoc.write(html, out_file_path, "html", ["--to", "markdown-raw_html-native_divs-native_spans-fenced_divs-bracketed_spans"])
-
-
+                        markdown_content = pandoc.write(
+                            doc=html,
+                            file=out_file_path,
+                            format="gfm",
+                            options=[ 
+                                "-s",
+                                # "--to", "markdown-raw_html-native_divs-native_spans-fenced_divs-bracketed_spans",
+                                # "--to", "gfm",
+                                "--to", "gfm-raw_html-fenced_divs-bracketed_spans",
+                            ]
+                        )
