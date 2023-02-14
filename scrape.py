@@ -47,14 +47,14 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python ./scrape.py <course_url> <save_dir>")
         print("For example: python ./scrape.py  https://www.roppers.org ComputingFundamentals")
-        print("Provide login creds via env vars THINKFIC_USER and THINKFIC_PASS")
+        print("Provide login creds via env vars THINKIFIC_USER and THINKIFIC_PASS")
     else:
         try:
-            THINKFIC_USER = os.environ["THINKFIC_USER"]
-            THINKFIC_PASS = os.environ["THINKFIC_PASS"]
+            THINKIFIC_USER = os.environ["THINKIFIC_USER"]
+            THINKIFIC_PASS = os.environ["THINKIFIC_PASS"]
         except KeyError:
             print("[!] A username and password are required to login to the course page.")
-            print("[!] Please provide values for the env vars THINKFIC_USER and THINKFIC_PASS and try again.")
+            print("[!] Please provide values for the env vars THINKIFIC_USER and THINKIFIC_PASS and try again.")
             exit(1)
 
         course_url = sys.argv[1]
@@ -75,18 +75,18 @@ if __name__ == "__main__":
         sign_in_btn.click()
 
 
-        # Login in to target Thinkfic course page
+        # Login in to target Thinkific course page
         user_input = driver.find_element(By.ID, "user[email]")
-        user_input.send_keys(THINKFIC_USER)
+        user_input.send_keys(THINKIFIC_USER)
         pass_input = driver.find_element(By.ID, "user[password]")
-        pass_input.send_keys(THINKFIC_PASS)
+        pass_input.send_keys(THINKIFIC_PASS)
 
         submit_btn = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
         print("Waiting for login process...", flush=True)
         submit_btn.click()
         wait.until(EC.title_contains("Dashboard"))
 
-        # Select Thinkfic course from dashboard
+        # Select Thinkific course from dashboard
         course_anchors = driver.find_elements(By.CSS_SELECTOR, 'ul[class="products__list"] div[class="card__header"] > a')
 
         print("The following courses were found:")
