@@ -2,9 +2,6 @@ import sys
 import pandoc
 from pathlib import Path
 import mdformat
-from bs4 import BeautifulSoup
-
-# pandoc.configure(version= '2.19')
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -22,25 +19,16 @@ if __name__ == "__main__":
                     out_file_path = Path(out_dir, chapter_dir.name, f"{lesson.stem}.md")
                     print(f"  - {out_file_path}")
 
-                    with lesson.open("r") as chapter_contents:
-                        html = pandoc.read(file=chapter_contents)
+                    with lesson.open("r", encoding="utf-8") as chapter_contents:
+                        html = pandoc.read(
+                            file=chapter_contents,
+                            format="html"
+                        )
                     
-                    # Convert to GitHub-flavored markdown (gfm)
-                    with out_file_path.open("w") as out_file:
-                        
-                        # Remove extraneous tags
+                        # Convert to GitHub-flavored markdown (gfm)
                         markdown_content = pandoc.write(
                             doc=html,
-                            format="markdown_strict",
+                            file=out_file_path,
+                            # format="gfm-raw_html",
+                            format="markdown_strict-raw_html",
                         )
-
-                        # Remove empty tags and prettify
-                        soup = BeautifulSoup(markdown_content, "html.parser")
-                        for ele in soup.find_all():
-                            if len(ele.get_text(strip=True)) == 0:
-                                ele.extract()
-                        html = soup.prettify("utf-8").decode('utf-8')
-                        out_file.write(html)
-                            
-
-                    
