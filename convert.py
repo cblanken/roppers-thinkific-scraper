@@ -27,13 +27,15 @@ if __name__ == "__main__":
                     
                     # Convert to GitHub-flavored markdown (gfm)
                     with out_file_path.open("w") as out_file:
+                        
+                        # Remove extraneous tags
                         markdown_content = pandoc.write(
                             doc=html,
-                            format="gfm-raw_html",
+                            format="markdown_strict",
                         )
 
                         # Remove empty tags and prettify
-                        soup = BeautifulSoup(markdown_content)
+                        soup = BeautifulSoup(markdown_content, "html.parser")
                         for ele in soup.find_all():
                             if len(ele.get_text(strip=True)) == 0:
                                 ele.extract()
