@@ -1,6 +1,8 @@
 import sys
 import pandoc
 from pathlib import Path
+import mdformat
+from bs4 import BeautifulSoup
 
 # pandoc.configure(version= '2.19')
 
@@ -23,15 +25,20 @@ if __name__ == "__main__":
                     with lesson.open("r") as chapter_contents:
                         html = pandoc.read(file=chapter_contents)
                     
+                    # Convert to GitHub-flavored markdown (gfm)
                     with out_file_path.open("w") as out_file:
                         markdown_content = pandoc.write(
                             doc=html,
-                            file=out_file_path,
-                            format="gfm",
-                            options=[ 
-                                "-s",
-                                # "--to", "markdown-raw_html-native_divs-native_spans-fenced_divs-bracketed_spans",
-                                # "--to", "gfm",
-                                "--to", "gfm-raw_html-fenced_divs-bracketed_spans",
-                            ]
+                            format="gfm-raw_html",
                         )
+
+                        # Remove empty tags and prettify
+                        soup = BeautifulSoup(markdown_content)
+                        for ele in soup.find_all():
+                            if len(ele.get_text(strip=True)) == 0:
+                                ele.extract()
+                        html = soup.prettify("utf-8").decode('utf-8')
+                        out_file.write(html)
+                            
+
+                    
