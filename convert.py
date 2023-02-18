@@ -84,3 +84,5 @@ $$\ $$ |  $$ | \$$$$  |$$ | $$ | $$ |$$ |           $$  /        $$\ $$ | $$ | $
                             ) 
         except KeyboardInterrupt:
             print("\nStopping conversion...")
+            exit(0)
+

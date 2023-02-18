@@ -90,87 +90,92 @@ $$\   $$ |$$ |      $$ |     $$  __$$ |$$ |  $$ |$$   ____|$$ |
             print("[!] Please provide values for the env vars THINKIFIC_USER and THINKIFIC_PASS and try again.")
             exit(1)
 
-        course_url = sys.argv[1]
-        save_dir = sys.argv[2]
 
-        # Intialize Selenium browser driver
-        opts = ChromeOptions()
-        opts.add_argument("--window-size=1600,900")
-        driver = webdriver.Chrome(options=opts)
-        driver.implicitly_wait(1)
-        driver.get(course_url)
+        try:
+            course_url = sys.argv[1]
+            save_dir = sys.argv[2]
 
-        # Default driver wait
-        wait = WebDriverWait(driver, 10)
+            # Intialize Selenium browser driver
+            opts = ChromeOptions()
+            opts.add_argument("--window-size=1600,900")
+            driver = webdriver.Chrome(options=opts)
+            driver.implicitly_wait(1)
+            driver.get(course_url)
 
-        # Navigate to sign in page
-        sign_in_btn = driver.find_element(By.LINK_TEXT, "SIGN IN")
-        sign_in_btn.click()
+            # Default driver wait
+            wait = WebDriverWait(driver, 10)
+
+            # Navigate to sign in page
+            sign_in_btn = driver.find_element(By.LINK_TEXT, "SIGN IN")
+            sign_in_btn.click()
 
 
-        # Login in to target Thinkific course page
-        user_input = driver.find_element(By.ID, "user[email]")
-        user_input.send_keys(THINKIFIC_USER)
-        pass_input = driver.find_element(By.ID, "user[password]")
-        pass_input.send_keys(THINKIFIC_PASS)
+            # Login in to target Thinkific course page
+            user_input = driver.find_element(By.ID, "user[email]")
+            user_input.send_keys(THINKIFIC_USER)
+            pass_input = driver.find_element(By.ID, "user[password]")
+            pass_input.send_keys(THINKIFIC_PASS)
 
-        submit_btn = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
-        print("Waiting for login process...", flush=True)
-        submit_btn.click()
-        wait.until(EC.title_contains("Dashboard"))
+            submit_btn = driver.find_element(By.CSS_SELECTOR, 'button[type="submit"]')
+            print("Waiting for login process...", flush=True)
+            submit_btn.click()
+            wait.until(EC.title_contains("Dashboard"))
 
-        # Select Thinkific course from dashboard
-        course_anchors = driver.find_elements(By.CSS_SELECTOR, 'ul[class="products__list"] div[class="card__header"] > a')
+            # Select Thinkific course from dashboard
+            course_anchors = driver.find_elements(By.CSS_SELECTOR, 'ul[class="products__list"] div[class="card__header"] > a')
 
-        print("The following courses were found:")
-        for i,anchor in enumerate(course_anchors):
-            href = anchor.get_attribute("href")
-            text = anchor.get_attribute("text")
-            print(f"- {i}: {text.strip()} => {href}")
-
-        index = input("Select a course number: ")
-
-        # Load course page
-        print("Navigating to course...", flush=True)
-        driver.get(course_anchors[int(index)].get_attribute("href"))
-        wait.until(EC.presence_of_element_located((By.ID, "player-wrapper")))
-
-        # Navigate lessons by chapter and save source files
-        chapter_divs = driver.find_elements(By.CSS_SELECTOR, 'div[class="course-player__chapters-menu "] > div')
-
-        for div in chapter_divs:
-            chapter_title = div.find_element(By.TAG_NAME, "h2").text
-            print(f"[!] {chapter_title}")
-
-            # Expand chapter if needed
-            expand_toggle = div.find_element(By.CSS_SELECTOR, 'span:nth-last-child(1)')
-
-            expanded_div_locator = (By.CSS_SELECTOR, "div:nth-of-type(1)")
-            if not element_is_expanded(div, expanded_div_locator, "true")(driver):
-                expand_toggle.click()
-                wait.until(element_is_expanded(div, expanded_div_locator, "true"))
-            
-            # Save each lesson HTML to file
-            lesson_lis = div.find_elements(By.TAG_NAME, "li")
-
-            # TODO: replace time.sleep with appropriate Wait
-            time.sleep(0.1) # delay to ensure lesson li tags are loaded
-
-            for li in lesson_lis:
-                anchor = li.find_element(By.CSS_SELECTOR, "a")
+            print("The following courses were found:")
+            for i,anchor in enumerate(course_anchors):
                 href = anchor.get_attribute("href")
+                text = anchor.get_attribute("text")
+                print(f"- {i}: {text.strip()} => {href}")
 
-                title = anchor.find_element(By.CSS_SELECTOR, "div:nth-last-child(1)").text.split('\n')[0].strip()
-                print(f"  - {title} => {href}")
+            index = input("Select a course number: ")
 
-                wait.until(EC.element_to_be_clickable(li))
-                li.click() # open lesson content
+            # Load course page
+            print("Navigating to course...", flush=True)
+            driver.get(course_anchors[int(index)].get_attribute("href"))
+            wait.until(EC.presence_of_element_located((By.ID, "player-wrapper")))
+
+            # Navigate lessons by chapter and save source files
+            chapter_divs = driver.find_elements(By.CSS_SELECTOR, 'div[class="course-player__chapters-menu "] > div')
+
+            for div in chapter_divs:
+                chapter_title = div.find_element(By.TAG_NAME, "h2").text
+                print(f"[!] {chapter_title}")
+
+                # Expand chapter if needed
+                expand_toggle = div.find_element(By.CSS_SELECTOR, 'span:nth-last-child(1)')
+
+                expanded_div_locator = (By.CSS_SELECTOR, "div:nth-of-type(1)")
+                if not element_is_expanded(div, expanded_div_locator, "true")(driver):
+                    expand_toggle.click()
+                    wait.until(element_is_expanded(div, expanded_div_locator, "true"))
                 
-                # Wait until lesson content is loaded
-                main_content = driver.find_element(By.ID, "content-inner")
-                wait.until(content_finished_loading(main_content))
-                
-                html = main_content.get_attribute("innerHTML")
-                save_lesson_as_html(save_dir, chapter_title, title, '\n'.join([x.strip() for x in html.split('\n')]))
+                # Save each lesson HTML to file
+                lesson_lis = div.find_elements(By.TAG_NAME, "li")
 
-        driver.close
+                # TODO: replace time.sleep with appropriate Wait
+                time.sleep(0.1) # delay to ensure lesson li tags are loaded
+
+                for li in lesson_lis:
+                    anchor = li.find_element(By.CSS_SELECTOR, "a")
+                    href = anchor.get_attribute("href")
+
+                    title = anchor.find_element(By.CSS_SELECTOR, "div:nth-last-child(1)").text.split('\n')[0].strip()
+                    print(f"  - {title} => {href}")
+
+                    wait.until(EC.element_to_be_clickable(li))
+                    li.click() # open lesson content
+                    
+                    # Wait until lesson content is loaded
+                    main_content = driver.find_element(By.ID, "content-inner")
+                    wait.until(content_finished_loading(main_content))
+                    
+                    html = main_content.get_attribute("innerHTML")
+                    save_lesson_as_html(save_dir, chapter_title, title, '\n'.join([x.strip() for x in html.split('\n')]))
+
+            driver.close
+        except KeyboardInterrupt:
+            print("\nStopping scrape...")
+            exit(0)
